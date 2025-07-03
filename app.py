@@ -4,7 +4,7 @@ import openai
 import io
 import random
 
-# This script (v9.3) contains the definitive grammatical fix for the
+# This script (v9.4) contains the definitive grammatical fix for the
 # programmatic sentence builder to ensure all openings are correct.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
@@ -63,37 +63,37 @@ def determine_opening_sentence(salutation_name, scores_dict):
     highest_score = max(scores_dict.values())
     tied_competencies = [comp for comp, score in scores_dict.items() if score == highest_score]
     
-    verb = random.choice(["evidenced", "demonstrated"])
+    opening_verb = random.choice(["evidenced", "demonstrated"])
 
     # Rule A: Highest score is 3.5 or greater (High Strength)
     if highest_score >= 3.5:
         # Structure: "[Name] demonstrated a strong ability to [verb] and [verb]."
-        verb_phrases = [COMPETENCY_TO_VERB_PHRASE.get(c, c.lower()) for c in tied_competencies]
-        formatted_verbs = format_list_for_sentence(verb_phrases)
+        list_of_verb_phrases = [COMPETENCY_TO_VERB_PHRASE.get(c, c.lower()) for c in tied_competencies]
+        formatted_string = format_list_for_sentence(list_of_verb_phrases)
         capacity_or_ability = random.choice(["a strong capacity to", "a strong ability to"])
-        return f"{salutation_name} {verb} {capacity_or_ability} {formatted_verbs}."
+        return f"{salutation_name} {opening_verb} {capacity_or_ability} {formatted_string}."
 
     # Rule B: Highest score is between 2.5 and 3.49 (Competence)
     elif highest_score >= 2.5:
         if len(tied_competencies) > 1:
-             # DEFINITIVE FIX: For ties, the structure "competence in [nouns]" is correct.
-             noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
-             formatted_nouns = format_list_for_sentence(noun_phrases)
-             return f"{salutation_name} {verb} competence in {formatted_nouns}."
+             # DEFINITIVE FIX: For TIES, the correct grammar is "competence in [NOUNS]".
+             list_of_noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
+             formatted_string = format_list_for_sentence(list_of_noun_phrases)
+             return f"{salutation_name} {opening_verb} competence in {formatted_string}."
         else:
-             # For a single competency, "the competence to [verb]" is correct.
+             # For a SINGLE competency, the correct grammar is "the competence to [VERB]".
              verb_phrase = COMPETENCY_TO_VERB_PHRASE.get(tied_competencies[0], tied_competencies[0].lower())
-             return f"{salutation_name} {verb} the competence to {verb_phrase}."
+             return f"{salutation_name} {opening_verb} the competence to {verb_phrase}."
 
     # Rule C: Highest score is less than 2.5 (Developing)
     else:
-        # DEFINITIVE FIX: This structure "[Name] evidenced [nouns]" is correct and now enforced.
-        noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
-        formatted_nouns = format_list_for_sentence(noun_phrases)
-        return f"{salutation_name} {verb} {formatted_nouns}."
+        # DEFINITIVE FIX: This structure "[Name] evidenced [NOUNS]" is correct and now enforced.
+        list_of_noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
+        formatted_string = format_list_for_sentence(list_of_noun_phrases)
+        return f"{salutation_name} {opening_verb} {formatted_string}."
 
 
-# --- The RE-ENGINEERED Master Prompt Template (Version 9.3) ---
+# --- The RE-ENGINEERED Master Prompt Template (Version 9.4) ---
 def create_master_prompt(salutation_name, pronoun, person_data, opening_sentence):
     """
     Dynamically creates the prompt. The opening sentence is now pre-built and passed in.
@@ -180,11 +180,11 @@ def generate_summary_azure(prompt, api_key, endpoint, deployment_name):
         return None
 
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v9.3", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V9.3)")
+st.set_page_config(page_title="DGE Executive Summary Generator v9.4", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V9.4)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 9.3 includes the definitive grammar fix for all opening sentences.**
+**Version 9.4 includes the definitive grammar fix for all opening sentences.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -210,9 +210,9 @@ sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V9.3)",
+    label="📥 Download Sample Template File (V9.4)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v9.3.xlsx",
+    file_name="dge_summary_template_v9.4.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -274,7 +274,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V9.3)")
+                st.subheader("Generated Summaries (V9.4)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -283,9 +283,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V9.3 Results as Excel",
+                    label="📥 Download V9.4 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V9.3.xlsx",
+                    file_name="Generated_Executive_Summaries_V9.4.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
