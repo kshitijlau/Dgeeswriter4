@@ -65,28 +65,29 @@ def determine_opening_sentence(salutation_name, scores_dict):
     
     verb = random.choice(["evidenced", "demonstrated"])
 
-    # Rule A: Highest score is 3.5 or greater
+    # Rule A: Highest score is 3.5 or greater (High Strength)
     if highest_score >= 3.5:
+        # This structure uses verb phrases and is grammatically correct.
         verb_phrases = [COMPETENCY_TO_VERB_PHRASE.get(c, c.lower()) for c in tied_competencies]
-        formatted_competencies = format_list_for_sentence(verb_phrases)
+        formatted_verbs = format_list_for_sentence(verb_phrases)
         capacity_or_ability = random.choice(["a strong capacity to", "a strong ability to"])
-        return f"{salutation_name} {verb} {capacity_or_ability} {formatted_competencies}."
+        return f"{salutation_name} {verb} {capacity_or_ability} {formatted_verbs}."
 
-    # Rule B: Highest score is between 2.5 and 3.49
+    # Rule B: Highest score is between 2.5 and 3.49 (Competence)
     elif highest_score >= 2.5:
         if len(tied_competencies) > 1:
-             # GRAMMAR FIX: Use noun phrases for ties in this bracket.
+             # GRAMMAR FIX: For ties, the structure "competence in [nouns]" is correct.
              noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
              formatted_nouns = format_list_for_sentence(noun_phrases)
              return f"{salutation_name} {verb} competence in {formatted_nouns}."
         else:
-             # This case for a single competency is grammatically correct with a verb phrase.
+             # For a single competency, "the competence to [verb]" is correct.
              verb_phrase = COMPETENCY_TO_VERB_PHRASE.get(tied_competencies[0], tied_competencies[0].lower())
              return f"{salutation_name} {verb} the competence to {verb_phrase}."
 
-    # Rule C: Highest score is less than 2.5
+    # Rule C: Highest score is less than 2.5 (Developing)
     else:
-        # This case correctly uses noun phrases.
+        # GRAMMAR FIX: This structure "[Name] evidenced [nouns]" is correct.
         noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
         formatted_nouns = format_list_for_sentence(noun_phrases)
         return f"{salutation_name} {verb} {formatted_nouns}."
