@@ -4,7 +4,7 @@ import openai
 import io
 import random
 
-# This script (v14.2) contains the definitive fix for the grammatical error
+# This script (v14.3) contains the definitive fix for the grammatical error
 # by correcting a logical inconsistency in the 'developing' prompt creation.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
@@ -26,6 +26,13 @@ COMPETENCY_TO_NOUN_PHRASE = {
     'Transformation Enabler': 'transformation enablement',
     'Innovation Explorer': 'innovation exploration'
 }
+
+def format_list_for_sentence(item_list):
+    """Formats a list of strings into a natural language string with commas and 'and'."""
+    if not item_list: return ""
+    if len(item_list) == 1: return item_list[0]
+    if len(item_list) == 2: return f"{item_list[0]} and {item_list[1]}"
+    return ", ".join(item_list[:-1]) + f", and {item_list[-1]}"
 
 # --- DEDICATED PROMPT TEMPLATES ---
 
@@ -118,9 +125,10 @@ Create a strict single-paragraph summary between 250-280 words. Start with the g
 
 def create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies):
     """Creates the prompt for cases where the highest score is less than 2.5."""
-    # DEFINITIVE BUG FIX: Pass the raw competency names to the prompt, just like the other
-    # functions. The AI will use the example to correctly map them to noun phrases.
-    competency_list_str = ", ".join(tied_competencies)
+    # DEFINITIVE BUG FIX: Pre-process the competency names into their correct noun phrases
+    # before passing them to the prompt. This removes ambiguity for the AI.
+    noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
+    competency_list_str = format_list_for_sentence(noun_phrases)
 
     prompt_text = f"""
 You are an elite talent management consultant and expert grammarian. Your task is to write an executive summary for {salutation_name}.
@@ -135,7 +143,7 @@ Your first task is to construct a single, grammatically perfect opening sentence
 * **Instruction:** `Create a 'DEVELOPING' opening for: {competency_list_str}`
 * **Follow this specific format:** `[Name] [verb] [noun phrase(s)]`.
 * **Reference Example:**
-    * **Instruction:** `DEVELOPING opening for: Effective Collaborator, Customer Advocate`
+    * **Instruction:** `DEVELOPING opening for: collaboration and customer advocacy`
     * **Correct Sentence:** `Wretched evidenced collaboration and customer advocacy.`
 
 ## BODY OF SUMMARY INSTRUCTION
@@ -199,11 +207,11 @@ def select_and_create_prompt(salutation_name, pronoun, person_data, scores_dict)
         return create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies)
 
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v14.2", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V14.2)")
+st.set_page_config(page_title="DGE Executive Summary Generator v14.3", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V14.3)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 14.2 contains the definitive fix for all opening sentence grammar.**
+**Version 14.3 contains the definitive fix for all opening sentence grammar.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -229,9 +237,9 @@ sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V14.2)",
+    label="📥 Download Sample Template File (V14.3)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v14.2.xlsx",
+    file_name="dge_summary_template_v14.3.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -291,7 +299,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V14.2)")
+                st.subheader("Generated Summaries (V14.3)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -300,9 +308,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V14.2 Results as Excel",
+                    label="📥 Download V14.3 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V14.2.xlsx",
+                    file_name="Generated_Executive_Summaries_V14.3.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
