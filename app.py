@@ -4,8 +4,8 @@ import openai
 import io
 import random
 
-# This script (v14.3) contains the definitive fix for the grammatical error
-# by correcting a logical inconsistency in the 'developing' prompt creation.
+# This script (v14.4) contains the definitive fix by removing the opening sentence
+# rule for low-score cases, allowing the AI to write narratively from the start.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
 def to_excel(df):
@@ -125,11 +125,7 @@ Create a strict single-paragraph summary between 250-280 words. Start with the g
 
 def create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies):
     """Creates the prompt for cases where the highest score is less than 2.5."""
-    # DEFINITIVE BUG FIX: Pre-process the competency names into their correct noun phrases
-    # before passing them to the prompt. This removes ambiguity for the AI.
-    noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
-    competency_list_str = format_list_for_sentence(noun_phrases)
-
+    # DEFINITIVE FIX: This prompt now instructs the AI to start narratively, without a formulaic opening.
     prompt_text = f"""
 You are an elite talent management consultant and expert grammarian. Your task is to write an executive summary for {salutation_name}.
 
@@ -138,16 +134,12 @@ You are an elite talent management consultant and expert grammarian. Your task i
 2.  **Structure:** A single, unified paragraph.
 3.  **Competencies:** Describe behaviors, do not use the exact competency names as labels.
 
-## OPENING SENTENCE INSTRUCTION
-Your first task is to construct a single, grammatically perfect opening sentence based on the instruction below.
-* **Instruction:** `Create a 'DEVELOPING' opening for: {competency_list_str}`
-* **Follow this specific format:** `[Name] [verb] [noun phrase(s)]`.
-* **Reference Example:**
-    * **Instruction:** `DEVELOPING opening for: collaboration and customer advocacy`
-    * **Correct Sentence:** `Wretched evidenced collaboration and customer advocacy.`
-
-## BODY OF SUMMARY INSTRUCTION
-Beginning from the second sentence, address each competency from the input data below using the "Integrated Feedback Loop" structure: describe the positive behavior, then immediately provide the related development area.
+## WRITING INSTRUCTION
+* You **MUST NOT** use a formulaic opening sentence for this summary.
+* You must begin the summary **immediately** by describing the most positive observed behavior from the highest-scoring competency in a narrative style.
+* After describing this first behavior, you must continue by addressing all other competencies using the "Integrated Feedback Loop" structure: describe the positive behavior for a competency, then immediately provide the related development area.
+* **Study the following example closely and replicate its narrative style and structure:**
+    * **Example for a low-scoring profile:** "Fatema evidenced collaboration by engaging positively with different parties, internally and externally, offering support and ensuring shared goals were properly achieved. To further develop her skills, Fatema may need to strengthen her self-confidence and the ability to communicate clearly... She demonstrated customer advocacy through resolving customers’ issues... Fatema may benefit from identifying customers’ needs..."
 
 ## Input Data for {salutation_name}
 <InputData>
@@ -155,7 +147,7 @@ Beginning from the second sentence, address each competency from the input data 
 </InputData>
 
 ## FINAL INSTRUCTIONS
-Create a strict single-paragraph summary between 250-280 words. Start with the grammatically perfect opening sentence you constructed, then follow with the Integrated Feedback Loop for the body. Use {pronoun} after the first mention of {salutation_name}.
+Create a strict single-paragraph summary between 250-280 words. Begin narratively as instructed and follow the Integrated Feedback Loop for the entire body. Use {pronoun} after the first mention of {salutation_name}.
 """
     return prompt_text
 
@@ -207,11 +199,11 @@ def select_and_create_prompt(salutation_name, pronoun, person_data, scores_dict)
         return create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies)
 
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v14.3", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V14.3)")
+st.set_page_config(page_title="DGE Executive Summary Generator v14.4", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V14.4)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 14.3 contains the definitive fix for all opening sentence grammar.**
+**Version 14.4 contains the definitive fix for all opening sentence logic.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -237,9 +229,9 @@ sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V14.3)",
+    label="📥 Download Sample Template File (V14.4)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v14.3.xlsx",
+    file_name="dge_summary_template_v14.4.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -299,7 +291,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V14.3)")
+                st.subheader("Generated Summaries (V14.4)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -308,9 +300,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V14.3 Results as Excel",
+                    label="📥 Download V14.4 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V14.3.xlsx",
+                    file_name="Generated_Executive_Summaries_V14.4.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
