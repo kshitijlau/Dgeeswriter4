@@ -4,8 +4,8 @@ import openai
 import io
 import random
 
-# This script (v10.0) reverts the opening sentence creation back to the AI,
-# but with a new, highly detailed set of prompt instructions to ensure grammatical correctness.
+# This script (v11.0) uses a definitive hybrid approach to fix all grammatical errors.
+# Python handles the complex logic, and the AI handles the grammar based on a simple instruction.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
 def to_excel(df):
@@ -16,7 +16,6 @@ def to_excel(df):
     return output.getvalue()
 
 # --- Mappings for Prompt Examples ---
-# This is now only used to help construct examples within the prompt itself.
 COMPETENCY_TO_VERB_PHRASE = {
     'Strategic Thinker': 'think strategically',
     'Impactful Decision Maker': 'make impactful decisions',
@@ -28,14 +27,32 @@ COMPETENCY_TO_VERB_PHRASE = {
     'Innovation Explorer': 'explore innovation'
 }
 
-# --- The RE-ENGINEERED Master Prompt Template (Version 10.0) ---
-def create_master_prompt(salutation_name, pronoun, person_data):
+COMPETENCY_TO_NOUN_PHRASE = {
+    'Strategic Thinker': 'strategic thinking',
+    'Impactful Decision Maker': 'impactful decision-making',
+    'Effective Collaborator': 'collaboration',
+    'Talent Nurturer': 'talent nurturing',
+    'Results Driver': 'a drive for results',
+    'Customer Advocate': 'customer advocacy',
+    'Transformation Enabler': 'transformation enablement',
+    'Innovation Explorer': 'innovation exploration'
+}
+
+def format_list_for_sentence(item_list):
+    """Formats a list of strings into a natural language string with commas and 'and'."""
+    if not item_list: return ""
+    if len(item_list) == 1: return item_list[0]
+    if len(item_list) == 2: return f"{item_list[0]} and {item_list[1]}"
+    return ", ".join(item_list[:-1]) + f", and {item_list[-1]}"
+
+# --- The RE-ENGINEERED Master Prompt Template (Version 11.0) ---
+def create_master_prompt(salutation_name, pronoun, person_data, opening_instruction):
     """
-    Dynamically creates the prompt. The AI is now responsible for creating the
-    opening sentence based on a new, highly detailed set of rules.
+    Dynamically creates the prompt. The AI is now given a simple instruction
+    to build a grammatically perfect opening sentence.
     """
     prompt_text = f"""
-You are an elite talent management consultant from a top-tier firm. Your writing is strategic, cohesive, and you follow instructions with absolute precision and perfect grammar.
+You are an elite talent management consultant and expert grammarian from a top-tier firm. Your writing is strategic, cohesive, and you follow instructions with absolute precision.
 
 ## NON-NEGOTIABLE CORE RULES
 1.  **Language:** The entire summary MUST be written in **British English**.
@@ -54,25 +71,19 @@ Synthesize the provided competency data for {salutation_name} into a single, coh
 ## CRITICAL DIRECTIVES FOR SUMMARY STRUCTURE & TONE
 ## ---------------------------------------------
 
-1.  **CRITICAL OPENING SENTENCE PROTOCOL (AI-DRIVEN CONDITIONAL LOGIC):**
-    * Your first task is to analyze the input data to find the single highest numerical score.
-    * You will then construct the opening sentence based on the score's value and whether there is a tie, following these rules precisely.
+1.  **CRITICAL OPENING SENTENCE CONSTRUCTION (MANDATORY):**
+    * Your first task is to construct a single, grammatically perfect opening sentence based on the instruction provided below.
+    * **Instruction for Opening Sentence:** "{opening_instruction}"
+    * You must use this instruction to create the sentence, referencing the examples below to ensure perfect grammar.
 
-    * **Rule A: If the highest score is 3.5 or greater (>= 3.5):**
-        * The sentence must reflect a clear strength using the format: `[Name] [verb] a strong [capacity/ability] to [verb phrase(s)]`.
-        * **For a single highest competency:** "Osman demonstrated a strong capacity to think strategically."
-        * **For a 2-way tie:** "Osman evidenced a strong capacity to think strategically and make impactful decisions."
-        * **For a 3-way tie:** "Khasiba demonstrated a strong ability to drive results, think strategically, and make impactful decisions."
-
-    * **Rule B: If the highest score is between 2.5 and 3.49 (inclusive):**
-        * The sentence must reflect competence.
-        * **For a single highest competency:** "Pitiable demonstrated the competence to nurture talent." (Structure: `...the competence to [verb phrase]`)
-        * **For a 2-way tie or more:** "Random evidenced competence in nurturing talent and thinking strategically." (Structure: `...competence in [noun phrase(s)]`)
-
-    * **Rule C: If the highest score is less than 2.5 (< 2.5):**
-        * The sentence must be a neutral observation of the highest-scoring behaviors.
-        * **For a single highest competency:** "Fatema evidenced collaboration."
-        * **For a 2-way tie or more:** "Wretched evidenced collaboration and customer advocacy." (Structure: `...[verb] [noun phrase(s)]`)
+    * **Examples of How to Convert Instructions to Sentences:**
+        * **If Instruction is `Rule A, 1 tie: think strategically`:** -> "Osman demonstrated a strong capacity to think strategically."
+        * **If Instruction is `Rule A, 2 ties: think strategically, make impactful decisions`:** -> "Osman evidenced a strong capacity to think strategically and make impactful decisions."
+        * **If Instruction is `Rule A, 3 ties: drive results, think strategically, make impactful decisions`:** -> "Khasiba demonstrated a strong ability to drive results, think strategically, and make impactful decisions."
+        * **If Instruction is `Rule B, 1 tie: nurture talent`:** -> "Pitiable demonstrated the competence to nurture talent."
+        * **If Instruction is `Rule B, 2+ ties: nurturing talent, thinking strategically`:** -> "Random evidenced competence in nurturing talent and thinking strategically."
+        * **If Instruction is `Rule C, 1 tie: collaboration`:** -> "Fatema evidenced collaboration."
+        * **If Instruction is `Rule C, 2+ ties: collaboration, customer advocacy`:** -> "Wretched evidenced collaboration and customer advocacy."
 
 2.  **STRUCTURE AFTER OPENING: The Integrated Feedback Loop.**
     * Beginning from the **second sentence**, the rest of the paragraph **MUST** address each competency one by one in a logical flow.
@@ -80,13 +91,13 @@ Synthesize the provided competency data for {salutation_name} into a single, coh
     * Then, **IMMEDIATELY AFTER** describing the behavior, you will provide the **related development area** for that same competency, introduced with a phrase like "As a next step...", "To build on this...", or "He may benefit from...".
 
 3.  **Name and Pronoun Usage:**
-    * Use the candidate's name in the opening sentence. After that, use only the pronoun **{pronoun}**.
+    * Use the candidate's name, **{salutation_name}**, in the opening sentence. After that, use only the pronoun **{pronoun}**.
 
 ## ---------------------------------------------
 ## FINAL INSTRUCTIONS
 ## ---------------------------------------------
 
-Now, process the data for {salutation_name}. First, analyze the scores to determine the correct opening sentence structure (A, B, or C) and ensure it is grammatically perfect. Then, create a **strict single-paragraph summary** that follows the **Integrated Feedback Loop** structure. The total word count should remain between 250-280 words.
+Now, process the data for {salutation_name}. First, create the grammatically perfect opening sentence based on the instruction. Then, create a **strict single-paragraph summary** that follows the **Integrated Feedback Loop** structure. The total word count should remain between 250-280 words.
 """
     return prompt_text
 
@@ -102,7 +113,7 @@ def generate_summary_azure(prompt, api_key, endpoint, deployment_name):
         response = client.chat.completions.create(
             model=deployment_name,
             messages=[
-                {"role": "system", "content": "You are an elite talent management consultant and expert grammarian. You follow all instructions with absolute precision, especially the conditional logic for constructing a grammatically perfect opening sentence."},
+                {"role": "system", "content": "You are an elite talent management consultant and expert grammarian. You follow all instructions with absolute precision, especially the rules for constructing a grammatically perfect opening sentence."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
@@ -116,12 +127,42 @@ def generate_summary_azure(prompt, api_key, endpoint, deployment_name):
         st.error(f"An error occurred while contacting Azure OpenAI: {e}")
         return None
 
+# --- Main App Logic ---
+def get_opening_instruction(scores_dict):
+    """Determines the simple instruction to pass to the AI for the opening sentence."""
+    if not scores_dict: return ""
+    
+    highest_score = max(scores_dict.values())
+    tied_competencies = [comp for comp, score in scores_dict.items() if score == highest_score]
+    
+    # Rule A: >= 3.5
+    if highest_score >= 3.5:
+        verb_phrases = [COMPETENCY_TO_VERB_PHRASE.get(c, c.lower()) for c in tied_competencies]
+        formatted_string = format_list_for_sentence(verb_phrases)
+        return f"Rule A, {len(tied_competencies)} tie(s): {formatted_string}"
+
+    # Rule B: >= 2.5 and < 3.5
+    elif highest_score >= 2.5:
+        if len(tied_competencies) > 1:
+            noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
+            formatted_string = format_list_for_sentence(noun_phrases)
+            return f"Rule B, 2+ ties: {formatted_string}"
+        else:
+            verb_phrase = COMPETENCY_TO_VERB_PHRASE.get(tied_competencies[0], tied_competencies[0].lower())
+            return f"Rule B, 1 tie: {verb_phrase}"
+
+    # Rule C: < 2.5
+    else:
+        noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
+        formatted_string = format_list_for_sentence(noun_phrases)
+        return f"Rule C, {len(tied_competencies)}+ tie(s): {formatted_string}"
+
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v10.0", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V10.0)")
+st.set_page_config(page_title="DGE Executive Summary Generator v11.0", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V11.0)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 10.0 uses an advanced AI-driven prompt to ensure grammatical correctness.**
+**Version 11.0 uses a definitive hybrid approach to ensure grammatical correctness.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -147,9 +188,9 @@ sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V10.0)",
+    label="📥 Download Sample Template File (V11.0)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v10.0.xlsx",
+    file_name="dge_summary_template_v11.0.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -193,8 +234,11 @@ if uploaded_file is not None:
                 scores_dict = {comp: float(row[comp]) for comp in all_known_competencies if comp in row and pd.notna(row[comp])}
                 person_data_str = "\n".join([f"- {comp}: {score}" for comp, score in scores_dict.items()])
 
-                # The prompt now handles all logic internally.
-                prompt = create_master_prompt(salutation_name, pronoun, person_data_str)
+                # Programmatically build the simple instruction for the AI
+                opening_instruction = get_opening_instruction(scores_dict)
+
+                # Create the prompt with the simple instruction
+                prompt = create_master_prompt(salutation_name, pronoun, person_data_str, opening_instruction)
                 summary = generate_summary_azure(prompt, azure_api_key, azure_endpoint, azure_deployment_name)
                 
                 if summary:
@@ -208,7 +252,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V10.0)")
+                st.subheader("Generated Summaries (V11.0)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -217,9 +261,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V10.0 Results as Excel",
+                    label="📥 Download V11.0 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V10.0.xlsx",
+                    file_name="Generated_Executive_Summaries_V11.0.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
