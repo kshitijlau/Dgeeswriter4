@@ -4,7 +4,7 @@ import openai
 import io
 import random
 
-# This script (v11.0) uses a definitive hybrid approach to fix all grammatical errors.
+# This script (v11.1) uses a definitive hybrid approach to fix all grammatical errors.
 # Python handles the complex logic, and the AI handles the grammar based on a simple instruction.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
@@ -45,7 +45,7 @@ def format_list_for_sentence(item_list):
     if len(item_list) == 2: return f"{item_list[0]} and {item_list[1]}"
     return ", ".join(item_list[:-1]) + f", and {item_list[-1]}"
 
-# --- The RE-ENGINEERED Master Prompt Template (Version 11.0) ---
+# --- The RE-ENGINEERED Master Prompt Template (Version 11.1) ---
 def create_master_prompt(salutation_name, pronoun, person_data, opening_instruction):
     """
     Dynamically creates the prompt. The AI is now given a simple instruction
@@ -72,18 +72,18 @@ Synthesize the provided competency data for {salutation_name} into a single, coh
 ## ---------------------------------------------
 
 1.  **CRITICAL OPENING SENTENCE CONSTRUCTION (MANDATORY):**
-    * Your first task is to construct a single, grammatically perfect opening sentence based on the instruction provided below.
+    * Your first task is to construct a single, grammatically perfect opening sentence based on the simple instruction provided below.
     * **Instruction for Opening Sentence:** "{opening_instruction}"
     * You must use this instruction to create the sentence, referencing the examples below to ensure perfect grammar.
 
     * **Examples of How to Convert Instructions to Sentences:**
-        * **If Instruction is `Rule A, 1 tie: think strategically`:** -> "Osman demonstrated a strong capacity to think strategically."
-        * **If Instruction is `Rule A, 2 ties: think strategically, make impactful decisions`:** -> "Osman evidenced a strong capacity to think strategically and make impactful decisions."
-        * **If Instruction is `Rule A, 3 ties: drive results, think strategically, make impactful decisions`:** -> "Khasiba demonstrated a strong ability to drive results, think strategically, and make impactful decisions."
-        * **If Instruction is `Rule B, 1 tie: nurture talent`:** -> "Pitiable demonstrated the competence to nurture talent."
-        * **If Instruction is `Rule B, 2+ ties: nurturing talent, thinking strategically`:** -> "Random evidenced competence in nurturing talent and thinking strategically."
-        * **If Instruction is `Rule C, 1 tie: collaboration`:** -> "Fatema evidenced collaboration."
-        * **If Instruction is `Rule C, 2+ ties: collaboration, customer advocacy`:** -> "Wretched evidenced collaboration and customer advocacy."
+        * **If Instruction is `Create a 'high-strength' opening for 1 competency: think strategically`:** -> "Osman demonstrated a strong capacity to think strategically."
+        * **If Instruction is `Create a 'high-strength' opening for 2 competencies: think strategically and make impactful decisions`:** -> "Osman evidenced a strong capacity to think strategically and make impactful decisions."
+        * **If Instruction is `Create a 'high-strength' opening for 3 competencies: drive results, think strategically, and make impactful decisions`:** -> "Khasiba demonstrated a strong ability to drive results, think strategically, and make impactful decisions."
+        * **If Instruction is `Create a 'competence-single' opening for competency: nurture talent`:** -> "Pitiable demonstrated the competence to nurture talent."
+        * **If Instruction is `Create a 'competence-tie' opening for competencies: nurturing talent and thinking strategically`:** -> "Random evidenced competence in nurturing talent and thinking strategically."
+        * **If Instruction is `Create a 'developing' opening for competencies: collaboration`:** -> "Fatema evidenced collaboration."
+        * **If Instruction is `Create a 'developing' opening for competencies: collaboration and customer advocacy`:** -> "Wretched evidenced collaboration and customer advocacy."
 
 2.  **STRUCTURE AFTER OPENING: The Integrated Feedback Loop.**
     * Beginning from the **second sentence**, the rest of the paragraph **MUST** address each competency one by one in a logical flow.
@@ -139,30 +139,30 @@ def get_opening_instruction(scores_dict):
     if highest_score >= 3.5:
         verb_phrases = [COMPETENCY_TO_VERB_PHRASE.get(c, c.lower()) for c in tied_competencies]
         formatted_string = format_list_for_sentence(verb_phrases)
-        return f"Rule A, {len(tied_competencies)} tie(s): {formatted_string}"
+        return f"Create a 'high-strength' opening for {len(tied_competencies)} competency(s): {formatted_string}"
 
     # Rule B: >= 2.5 and < 3.5
     elif highest_score >= 2.5:
         if len(tied_competencies) > 1:
             noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
             formatted_string = format_list_for_sentence(noun_phrases)
-            return f"Rule B, 2+ ties: {formatted_string}"
+            return f"Create a 'competence-tie' opening for competencies: {formatted_string}"
         else:
             verb_phrase = COMPETENCY_TO_VERB_PHRASE.get(tied_competencies[0], tied_competencies[0].lower())
-            return f"Rule B, 1 tie: {verb_phrase}"
+            return f"Create a 'competence-single' opening for competency: {verb_phrase}"
 
     # Rule C: < 2.5
     else:
         noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
         formatted_string = format_list_for_sentence(noun_phrases)
-        return f"Rule C, {len(tied_competencies)}+ tie(s): {formatted_string}"
+        return f"Create a 'developing' opening for competencies: {formatted_string}"
 
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v11.0", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V11.0)")
+st.set_page_config(page_title="DGE Executive Summary Generator v11.1", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V11.1)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 11.0 uses a definitive hybrid approach to ensure grammatical correctness.**
+**Version 11.1 uses a definitive hybrid approach to ensure grammatical correctness.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -188,9 +188,9 @@ sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V11.0)",
+    label="📥 Download Sample Template File (V11.1)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v11.0.xlsx",
+    file_name="dge_summary_template_v11.1.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -252,7 +252,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V11.0)")
+                st.subheader("Generated Summaries (V11.1)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -261,9 +261,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V11.0 Results as Excel",
+                    label="📥 Download V11.1 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V11.0.xlsx",
+                    file_name="Generated_Executive_Summaries_V11.1.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
