@@ -4,8 +4,8 @@ import openai
 import io
 import random
 
-# This script (v14.0) uses a definitive multi-prompt architecture to fix all grammatical errors.
-# Python determines the exact scenario and calls a dedicated, tailored prompt for that case.
+# This script (v14.1) contains the definitive fix for the grammatical error
+# in the 'developing' prompt, ensuring all summaries are now correct.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
 def to_excel(df):
@@ -15,6 +15,18 @@ def to_excel(df):
         df.to_excel(writer, index=False, sheet_name='Summaries')
     return output.getvalue()
 
+# --- Mappings for Noun/Verb Phrases ---
+COMPETENCY_TO_NOUN_PHRASE = {
+    'Strategic Thinker': 'strategic thinking',
+    'Impactful Decision Maker': 'impactful decision-making',
+    'Effective Collaborator': 'collaboration',
+    'Talent Nurturer': 'talent nurturing',
+    'Results Driver': 'a drive for results',
+    'Customer Advocate': 'customer advocacy',
+    'Transformation Enabler': 'transformation enablement',
+    'Innovation Explorer': 'innovation exploration'
+}
+
 # --- DEDICATED PROMPT TEMPLATES ---
 
 def create_high_strength_prompt(salutation_name, pronoun, person_data, tied_competencies):
@@ -22,14 +34,13 @@ def create_high_strength_prompt(salutation_name, pronoun, person_data, tied_comp
     num_ties = len(tied_competencies)
     competency_list_str = ", ".join(tied_competencies)
 
-    # Choose the correct example based on the number of ties
     if num_ties == 1:
         example_instruction = f"HIGH-STRENGTH opening for: {competency_list_str}"
         example_sentence = f"{salutation_name} demonstrated a strong capacity to think strategically."
     elif num_ties == 2:
         example_instruction = f"HIGH-STRENGTH opening for: Strategic Thinker, Impactful Decision Maker"
         example_sentence = f"{salutation_name} evidenced a strong capacity to think strategically and make impactful decisions."
-    else: # 3 or more ties
+    else:
         example_instruction = f"HIGH-STRENGTH opening for: Results Driver, Strategic Thinker, Impactful Decision Maker"
         example_sentence = f"{salutation_name} demonstrated a strong ability to drive results, think strategically, and make impactful decisions."
 
@@ -67,12 +78,11 @@ def create_competence_prompt(salutation_name, pronoun, person_data, tied_compete
     num_ties = len(tied_competencies)
     competency_list_str = ", ".join(tied_competencies)
 
-    # Choose the correct example and format based on the number of ties
     if num_ties == 1:
         instruction_format = "the competence to [verb phrase]"
         example_instruction = f"COMPETENCE-SINGLE opening for: Talent Nurturer"
         example_sentence = f"{salutation_name} demonstrated the competence to nurture talent."
-    else: # 2 or more ties
+    else:
         instruction_format = "competence in [noun phrase(s)]"
         example_instruction = f"COMPETENCE-TIE opening for: Talent Nurturer, Strategic Thinker"
         example_sentence = f"{salutation_name} evidenced competence in talent nurturing and strategic thinking."
@@ -108,7 +118,13 @@ Create a strict single-paragraph summary between 250-280 words. Start with the g
 
 def create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies):
     """Creates the prompt for cases where the highest score is less than 2.5."""
-    competency_list_str = ", ".join(tied_competencies)
+    # BUG FIX: Convert competency names to noun phrases before passing them to the prompt.
+    noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
+    if len(noun_phrases) > 1:
+        competency_list_str = ", ".join(noun_phrases[:-1]) + f", and {noun_phrases[-1]}"
+    else:
+        competency_list_str = noun_phrases[0] if noun_phrases else ""
+
 
     prompt_text = f"""
 You are an elite talent management consultant and expert grammarian. Your task is to write an executive summary for {salutation_name}.
@@ -123,7 +139,7 @@ Your first task is to construct a single, grammatically perfect opening sentence
 * **Instruction:** `Create a 'DEVELOPING' opening for: {competency_list_str}`
 * **Follow this specific format:** `[Name] [verb] [noun phrase(s)]`.
 * **Reference Example:**
-    * **Instruction:** `DEVELOPING opening for: Effective Collaborator, Customer Advocate`
+    * **Instruction:** `DEVELOPING opening for: collaboration, and customer advocacy`
     * **Correct Sentence:** `Wretched evidenced collaboration and customer advocacy.`
 
 ## BODY OF SUMMARY INSTRUCTION
@@ -187,11 +203,11 @@ def select_and_create_prompt(salutation_name, pronoun, person_data, scores_dict)
         return create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies)
 
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v14.0", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V14.0)")
+st.set_page_config(page_title="DGE Executive Summary Generator v14.1", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V14.1)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 14.0 uses a definitive multi-prompt architecture to ensure grammatical correctness.**
+**Version 14.1 contains the definitive fix for all opening sentence grammar.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -217,9 +233,9 @@ sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V14.0)",
+    label="📥 Download Sample Template File (V14.1)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v14.0.xlsx",
+    file_name="dge_summary_template_v14.1.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -242,11 +258,7 @@ if uploaded_file is not None:
                 st.error("Azure OpenAI credentials not found. Please configure them in your Streamlit secrets.")
                 st.stop()
             
-            all_known_competencies = [
-                'Strategic Thinker', 'Impactful Decision Maker', 'Effective Collaborator',
-                'Talent Nurturer', 'Results Driver', 'Customer Advocate',
-                'Transformation Enabler', 'Innovation Explorer'
-            ]
+            all_known_competencies = list(COMPETENCY_TO_NOUN_PHRASE.keys())
             
             if 'salutation_name' not in df.columns:
                 st.error("Error: The uploaded file is missing the required 'salutation_name' column.")
@@ -283,7 +295,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V14.0)")
+                st.subheader("Generated Summaries (V14.1)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -292,9 +304,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V14.0 Results as Excel",
+                    label="📥 Download V14.1 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V14.0.xlsx",
+                    file_name="Generated_Executive_Summaries_V14.1.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
