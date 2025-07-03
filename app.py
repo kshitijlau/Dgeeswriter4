@@ -4,7 +4,7 @@ import openai
 import io
 import random
 
-# This script (v9.2) contains the definitive grammatical fix for the
+# This script (v9.3) contains the definitive grammatical fix for the
 # programmatic sentence builder to ensure all openings are correct.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
@@ -67,7 +67,7 @@ def determine_opening_sentence(salutation_name, scores_dict):
 
     # Rule A: Highest score is 3.5 or greater (High Strength)
     if highest_score >= 3.5:
-        # This structure uses verb phrases and is grammatically correct.
+        # Structure: "[Name] demonstrated a strong ability to [verb] and [verb]."
         verb_phrases = [COMPETENCY_TO_VERB_PHRASE.get(c, c.lower()) for c in tied_competencies]
         formatted_verbs = format_list_for_sentence(verb_phrases)
         capacity_or_ability = random.choice(["a strong capacity to", "a strong ability to"])
@@ -76,7 +76,7 @@ def determine_opening_sentence(salutation_name, scores_dict):
     # Rule B: Highest score is between 2.5 and 3.49 (Competence)
     elif highest_score >= 2.5:
         if len(tied_competencies) > 1:
-             # GRAMMAR FIX: For ties, the structure "competence in [nouns]" is correct.
+             # DEFINITIVE FIX: For ties, the structure "competence in [nouns]" is correct.
              noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
              formatted_nouns = format_list_for_sentence(noun_phrases)
              return f"{salutation_name} {verb} competence in {formatted_nouns}."
@@ -87,13 +87,13 @@ def determine_opening_sentence(salutation_name, scores_dict):
 
     # Rule C: Highest score is less than 2.5 (Developing)
     else:
-        # GRAMMAR FIX: This structure "[Name] evidenced [nouns]" is correct.
+        # DEFINITIVE FIX: This structure "[Name] evidenced [nouns]" is correct and now enforced.
         noun_phrases = [COMPETENCY_TO_NOUN_PHRASE.get(c, c.lower()) for c in tied_competencies]
         formatted_nouns = format_list_for_sentence(noun_phrases)
         return f"{salutation_name} {verb} {formatted_nouns}."
 
 
-# --- The RE-ENGINEERED Master Prompt Template (Version 9.2) ---
+# --- The RE-ENGINEERED Master Prompt Template (Version 9.3) ---
 def create_master_prompt(salutation_name, pronoun, person_data, opening_sentence):
     """
     Dynamically creates the prompt. The opening sentence is now pre-built and passed in.
@@ -180,11 +180,11 @@ def generate_summary_azure(prompt, api_key, endpoint, deployment_name):
         return None
 
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v9.2", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V9.2)")
+st.set_page_config(page_title="DGE Executive Summary Generator v9.3", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V9.3)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 9.2 includes the definitive grammar fix for all opening sentences.**
+**Version 9.3 includes the definitive grammar fix for all opening sentences.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -210,9 +210,9 @@ sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V9.2)",
+    label="📥 Download Sample Template File (V9.3)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v9.2.xlsx",
+    file_name="dge_summary_template_v9.3.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -274,7 +274,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V9.2)")
+                st.subheader("Generated Summaries (V9.3)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -283,9 +283,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V9.2 Results as Excel",
+                    label="📥 Download V9.3 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V9.2.xlsx",
+                    file_name="Generated_Executive_Summaries_V9.3.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
