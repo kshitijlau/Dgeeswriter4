@@ -4,7 +4,7 @@ import openai
 import io
 import random
 
-# This script (v9.4) contains the definitive grammatical fix for the
+# This script (v9.5) contains the definitive and final grammatical fix for the
 # programmatic sentence builder to ensure all openings are correct.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
@@ -93,7 +93,7 @@ def determine_opening_sentence(salutation_name, scores_dict):
         return f"{salutation_name} {opening_verb} {formatted_string}."
 
 
-# --- The RE-ENGINEERED Master Prompt Template (Version 9.4) ---
+# --- The RE-ENGINEERED Master Prompt Template (Version 9.5) ---
 def create_master_prompt(salutation_name, pronoun, person_data, opening_sentence):
     """
     Dynamically creates the prompt. The opening sentence is now pre-built and passed in.
@@ -180,11 +180,11 @@ def generate_summary_azure(prompt, api_key, endpoint, deployment_name):
         return None
 
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v9.4", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V9.4)")
+st.set_page_config(page_title="DGE Executive Summary Generator v9.5", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V9.5)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 9.4 includes the definitive grammar fix for all opening sentences.**
+**Version 9.5 includes the definitive grammar fix for all opening sentences.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -210,9 +210,9 @@ sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V9.4)",
+    label="📥 Download Sample Template File (V9.5)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v9.4.xlsx",
+    file_name="dge_summary_template_v9.5.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -274,7 +274,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V9.4)")
+                st.subheader("Generated Summaries (V9.5)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -283,9 +283,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V9.4 Results as Excel",
+                    label="📥 Download V9.5 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V9.4.xlsx",
+                    file_name="Generated_Executive_Summaries_V9.5.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
