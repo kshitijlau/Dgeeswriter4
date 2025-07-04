@@ -4,8 +4,8 @@ import openai
 import io
 import random
 
-# This script (v15.0) contains the definitive fix for the paragraph break
-# and tense inconsistency issues by reinforcing the core rules in all prompts.
+# This script (v15.1) contains the definitive fix for the tone of the opening
+# sentence in low-scoring profiles, ensuring it remains neutral.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
 def to_excel(df):
@@ -108,6 +108,7 @@ Create a strict single-paragraph summary between 250-280 words. Start with the g
 
 def create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies):
     """Creates the prompt for cases where the highest score is less than 2.5."""
+    # This prompt now has the final rule for neutral tone.
     prompt_text = f"""
 You are an elite talent management consultant and expert grammarian. Your task is to write an executive summary for {salutation_name}.
 
@@ -118,10 +119,10 @@ You are an elite talent management consultant and expert grammarian. Your task i
 4.  **Tense:** All descriptions of observed, positive behaviors **MUST** be in the **past tense** (e.g., "He demonstrated...", "She showcased...").
 
 ## WRITING INSTRUCTION
-* You **MUST NOT** use a formulaic opening sentence for this summary.
-* You must begin the summary **immediately** by describing the most positive observed behavior from the highest-scoring competency in a narrative style, using the **past tense**.
-* After describing this first behavior, you must continue by addressing all other competencies using the "Integrated Feedback Loop" structure: describe the positive behavior for a competency (in past tense), then immediately provide the related development area.
-* **Study the following example closely and replicate its narrative style and structure:**
+* **Opening Sentence:** You **MUST NOT** use a formulaic opening sentence for this summary. You must begin the summary **immediately** by describing the most positive observed behavior from the highest-scoring competency in a narrative style.
+* **CRITICAL TONE RULE:** This opening statement **MUST be neutral**. Do not use any positive adjectives like "strong," "notable," or "exceptional."
+* **Body of Summary:** After the neutral opening, you must continue by addressing all other competencies using the "Integrated Feedback Loop" structure: describe the positive behavior for a competency (in past tense), then immediately provide the related development area.
+* **Study the following example closely and replicate its neutral style and structure:**
     * **Example for a low-scoring profile:** "Fatema evidenced collaboration by engaging positively with different parties, internally and externally, offering support and ensuring shared goals were properly achieved. To further develop her skills, Fatema may need to strengthen her self-confidence and the ability to communicate clearly... She demonstrated customer advocacy through resolving customers’ issues... Fatema may benefit from identifying customers’ needs..."
 
 ## Input Data for {salutation_name}
@@ -130,7 +131,7 @@ You are an elite talent management consultant and expert grammarian. Your task i
 </InputData>
 
 ## FINAL INSTRUCTIONS
-Create a strict single-paragraph summary between 250-280 words. Begin narratively as instructed and follow the Integrated Feedback Loop for the entire body. Use {pronoun} after the first mention of {salutation_name}.
+Create a strict single-paragraph summary between 250-280 words. Begin narratively with a neutral tone as instructed and follow the Integrated Feedback Loop for the entire body. Use {pronoun} after the first mention of {salutation_name}.
 """
     return prompt_text
 
@@ -182,11 +183,11 @@ def select_and_create_prompt(salutation_name, pronoun, person_data, scores_dict)
         return create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies)
 
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v15.0", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V15.0)")
+st.set_page_config(page_title="DGE Executive Summary Generator v15.1", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V15.1)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 15.0 contains the definitive fix for paragraph and tense issues.**
+**Version 15.1 contains the definitive fix for all opening sentence tone and grammar.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -212,9 +213,9 @@ sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V15.0)",
+    label="📥 Download Sample Template File (V15.1)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v15.0.xlsx",
+    file_name="dge_summary_template_v15.1.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -278,7 +279,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V15.0)")
+                st.subheader("Generated Summaries (V15.1)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -287,9 +288,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V15.0 Results as Excel",
+                    label="📥 Download V15.1 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V15.0.xlsx",
+                    file_name="Generated_Executive_Summaries_V15.1.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
