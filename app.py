@@ -4,8 +4,8 @@ import openai
 import io
 import random
 
-# This script (v14.4) contains the definitive fix by removing the opening sentence
-# rule for low-score cases, allowing the AI to write narratively from the start.
+# This script (v15.0) contains the definitive fix for the paragraph break
+# and tense inconsistency issues by reinforcing the core rules in all prompts.
 
 # --- Helper Function to convert DataFrame to Excel in memory ---
 def to_excel(df):
@@ -14,25 +14,6 @@ def to_excel(df):
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Summaries')
     return output.getvalue()
-
-# --- Mappings for Noun/Verb Phrases ---
-COMPETENCY_TO_NOUN_PHRASE = {
-    'Strategic Thinker': 'strategic thinking',
-    'Impactful Decision Maker': 'impactful decision-making',
-    'Effective Collaborator': 'collaboration',
-    'Talent Nurturer': 'talent nurturing',
-    'Results Driver': 'a drive for results',
-    'Customer Advocate': 'customer advocacy',
-    'Transformation Enabler': 'transformation enablement',
-    'Innovation Explorer': 'innovation exploration'
-}
-
-def format_list_for_sentence(item_list):
-    """Formats a list of strings into a natural language string with commas and 'and'."""
-    if not item_list: return ""
-    if len(item_list) == 1: return item_list[0]
-    if len(item_list) == 2: return f"{item_list[0]} and {item_list[1]}"
-    return ", ".join(item_list[:-1]) + f", and {item_list[-1]}"
 
 # --- DEDICATED PROMPT TEMPLATES ---
 
@@ -56,8 +37,9 @@ You are an elite talent management consultant and expert grammarian. Your task i
 
 ## NON-NEGOTIABLE CORE RULES
 1.  **Language:** British English.
-2.  **Structure:** A single, unified paragraph.
+2.  **Structure:** A **single, unified paragraph**. You must not use any line breaks. This is a critical rule.
 3.  **Competencies:** Describe behaviors, do not use the exact competency names as labels.
+4.  **Tense:** All descriptions of observed, positive behaviors **MUST** be in the **past tense** (e.g., "He demonstrated...", "She showcased...").
 
 ## OPENING SENTENCE INSTRUCTION
 Your first task is to construct a single, grammatically perfect opening sentence based on the instruction below.
@@ -68,7 +50,7 @@ Your first task is to construct a single, grammatically perfect opening sentence
     * **Correct Sentence:** `{example_sentence}`
 
 ## BODY OF SUMMARY INSTRUCTION
-Beginning from the second sentence, address each competency from the input data below using the "Integrated Feedback Loop" structure: describe the positive behavior, then immediately provide the related development area.
+Beginning from the second sentence, address each competency from the input data below using the "Integrated Feedback Loop" structure: describe the positive behavior (in past tense), then immediately provide the related development area.
 
 ## Input Data for {salutation_name}
 <InputData>
@@ -76,7 +58,7 @@ Beginning from the second sentence, address each competency from the input data 
 </InputData>
 
 ## FINAL INSTRUCTIONS
-Create a strict single-paragraph summary between 250-280 words. Start with the grammatically perfect opening sentence you constructed, then follow with the Integrated Feedback Loop for the body. Use {pronoun} after the first mention of {salutation_name}.
+Create a strict single-paragraph summary between 250-280 words. Start with the grammatically perfect opening sentence you constructed, then follow the Integrated Feedback Loop for the body. Use {pronoun} after the first mention of {salutation_name}.
 """
     return prompt_text
 
@@ -99,8 +81,9 @@ You are an elite talent management consultant and expert grammarian. Your task i
 
 ## NON-NEGOTIABLE CORE RULES
 1.  **Language:** British English.
-2.  **Structure:** A single, unified paragraph.
+2.  **Structure:** A **single, unified paragraph**. You must not use any line breaks. This is a critical rule.
 3.  **Competencies:** Describe behaviors, do not use the exact competency names as labels.
+4.  **Tense:** All descriptions of observed, positive behaviors **MUST** be in the **past tense** (e.g., "He demonstrated...", "She showcased...").
 
 ## OPENING SENTENCE INSTRUCTION
 Your first task is to construct a single, grammatically perfect opening sentence based on the instruction below.
@@ -111,7 +94,7 @@ Your first task is to construct a single, grammatically perfect opening sentence
     * **Correct Sentence:** `{example_sentence}`
 
 ## BODY OF SUMMARY INSTRUCTION
-Beginning from the second sentence, address each competency from the input data below using the "Integrated Feedback Loop" structure: describe the positive behavior, then immediately provide the related development area.
+Beginning from the second sentence, address each competency from the input data below using the "Integrated Feedback Loop" structure: describe the positive behavior (in past tense), then immediately provide the related development area.
 
 ## Input Data for {salutation_name}
 <InputData>
@@ -125,19 +108,19 @@ Create a strict single-paragraph summary between 250-280 words. Start with the g
 
 def create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies):
     """Creates the prompt for cases where the highest score is less than 2.5."""
-    # DEFINITIVE FIX: This prompt now instructs the AI to start narratively, without a formulaic opening.
     prompt_text = f"""
 You are an elite talent management consultant and expert grammarian. Your task is to write an executive summary for {salutation_name}.
 
 ## NON-NEGOTIABLE CORE RULES
 1.  **Language:** British English.
-2.  **Structure:** A single, unified paragraph.
+2.  **Structure:** A **single, unified paragraph**. You must not use any line breaks. This is a critical rule.
 3.  **Competencies:** Describe behaviors, do not use the exact competency names as labels.
+4.  **Tense:** All descriptions of observed, positive behaviors **MUST** be in the **past tense** (e.g., "He demonstrated...", "She showcased...").
 
 ## WRITING INSTRUCTION
 * You **MUST NOT** use a formulaic opening sentence for this summary.
-* You must begin the summary **immediately** by describing the most positive observed behavior from the highest-scoring competency in a narrative style.
-* After describing this first behavior, you must continue by addressing all other competencies using the "Integrated Feedback Loop" structure: describe the positive behavior for a competency, then immediately provide the related development area.
+* You must begin the summary **immediately** by describing the most positive observed behavior from the highest-scoring competency in a narrative style, using the **past tense**.
+* After describing this first behavior, you must continue by addressing all other competencies using the "Integrated Feedback Loop" structure: describe the positive behavior for a competency (in past tense), then immediately provide the related development area.
 * **Study the following example closely and replicate its narrative style and structure:**
     * **Example for a low-scoring profile:** "Fatema evidenced collaboration by engaging positively with different parties, internally and externally, offering support and ensuring shared goals were properly achieved. To further develop her skills, Fatema may need to strengthen her self-confidence and the ability to communicate clearly... She demonstrated customer advocacy through resolving customers’ issues... Fatema may benefit from identifying customers’ needs..."
 
@@ -164,7 +147,7 @@ def generate_summary_azure(prompt, api_key, endpoint, deployment_name):
         response = client.chat.completions.create(
             model=deployment_name,
             messages=[
-                {"role": "system", "content": "You are an elite talent management consultant and expert grammarian. You follow all instructions with absolute precision, especially the rules for constructing a grammatically perfect opening sentence."},
+                {"role": "system", "content": "You are an elite talent management consultant and expert grammarian. You follow all instructions with absolute precision, especially the non-negotiable core rules about structure and tense."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
@@ -199,11 +182,11 @@ def select_and_create_prompt(salutation_name, pronoun, person_data, scores_dict)
         return create_developing_prompt(salutation_name, pronoun, person_data, tied_competencies)
 
 # --- Streamlit App Main UI ---
-st.set_page_config(page_title="DGE Executive Summary Generator v14.4", layout="wide")
-st.title("📄 DGE Executive Summary Generator (V14.4)")
+st.set_page_config(page_title="DGE Executive Summary Generator v15.0", layout="wide")
+st.title("📄 DGE Executive Summary Generator (V15.0)")
 st.markdown("""
 This application generates professional executive summaries based on leadership competency scores.
-**Version 14.4 contains the definitive fix for all opening sentence logic.**
+**Version 15.0 contains the definitive fix for paragraph and tense issues.**
 1.  **Set up your secrets**.
 2.  **Download the Sample Template**.
 3.  **Upload your completed Excel file**.
@@ -212,26 +195,26 @@ This application generates professional executive summaries based on leadership 
 
 # --- Create and provide a sample file for download ---
 sample_data = {
-    'email': ['wretched.w@example.com', 'pitiable.p@example.com', 'bechari.b@example.com', 'bechara.b@example.com'],
-    'salutation_name': ['Wretched', 'Pitiable', 'Bechari', 'Bechara'],
-    'gender': ['M', 'F', 'F', 'M'],
-    'level': ['Specialist', 'Manager', 'Specialist', 'Manager'],
-    'Strategic Thinker': [2.05, 3.1, 2.09, 2.05],
-    'Impactful Decision Maker': [1.62, 3.1, 2.09, 1.62],
-    'Effective Collaborator': [2.47, 3.04, 2.09, 2.47],
-    'Talent Nurturer': [1.97, 3.3, 2.06, 1.97],
-    'Results Driver': [2.03, 3, 2.05, 2.03],
-    'Customer Advocate': [2.47, 2.9, 2.03, 2.47],
-    'Transformation Enabler': [2.01, 3, 2.01, 2.01],
-    'Innovation Explorer': [2.31, 3, 2, 2.31]
+    'email': ['bechara.b@example.com', 'hapless.h@example.com'],
+    'salutation_name': ['Bechara', 'Hapless'],
+    'gender': ['M', 'M'],
+    'level': ['Manager', 'Specialist'],
+    'Strategic Thinker': [2.05, 3.1],
+    'Impactful Decision Maker': [1.62, 3.1],
+    'Effective Collaborator': [2.47, 3.04],
+    'Talent Nurturer': [1.97, 3.3],
+    'Results Driver': [2.03, 3],
+    'Customer Advocate': [2.47, 2.9],
+    'Transformation Enabler': [2.01, 3],
+    'Innovation Explorer': [2.31, 3]
 }
 sample_df = pd.DataFrame(sample_data)
 sample_excel_data = to_excel(sample_df)
 
 st.download_button(
-    label="📥 Download Sample Template File (V14.4)",
+    label="📥 Download Sample Template File (V15.0)",
     data=sample_excel_data,
-    file_name="dge_summary_template_v14.4.xlsx",
+    file_name="dge_summary_template_v15.0.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 st.divider()
@@ -254,7 +237,11 @@ if uploaded_file is not None:
                 st.error("Azure OpenAI credentials not found. Please configure them in your Streamlit secrets.")
                 st.stop()
             
-            all_known_competencies = list(COMPETENCY_TO_NOUN_PHRASE.keys())
+            all_known_competencies = [
+                'Strategic Thinker', 'Impactful Decision Maker', 'Effective Collaborator',
+                'Talent Nurturer', 'Results Driver', 'Customer Advocate',
+                'Transformation Enabler', 'Innovation Explorer'
+            ]
             
             if 'salutation_name' not in df.columns:
                 st.error("Error: The uploaded file is missing the required 'salutation_name' column.")
@@ -291,7 +278,7 @@ if uploaded_file is not None:
 
             if generated_summaries:
                 st.balloons()
-                st.subheader("Generated Summaries (V14.4)")
+                st.subheader("Generated Summaries (V15.0)")
                 
                 output_df = df.copy()
                 output_df['Executive Summary'] = generated_summaries
@@ -300,9 +287,9 @@ if uploaded_file is not None:
                 
                 results_excel_data = to_excel(output_df)
                 st.download_button(
-                    label="📥 Download V14.4 Results as Excel",
+                    label="📥 Download V15.0 Results as Excel",
                     data=results_excel_data,
-                    file_name="Generated_Executive_Summaries_V14.4.xlsx",
+                    file_name="Generated_Executive_Summaries_V15.0.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
